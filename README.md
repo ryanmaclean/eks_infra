@@ -11,8 +11,8 @@ Run `terraform init`
 Then run `terraform apply`:
 
 ```bash
-terraform apply . \
- --var cluster-name="terraform-eks-demo"
+terraform apply \
+ -var='cluster-name=terraform-eks-demo'
 ```
 
 Retrieve the kubeconfig with:
