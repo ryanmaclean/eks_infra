@@ -36,3 +36,36 @@ kube-system   coredns-75b44cb5b4-7bqnj   1/1     Running   0          6m45s
 kube-system   coredns-75b44cb5b4-8j78j   1/1     Running   0          6m45s
 kube-system   kube-proxy-tlmbv           1/1     Running   0          3m4s
 ```
+## Datadog Install
+
+### Add Helm Repository
+
+```bash
+helm repo add datadog https://helm.datadoghq.com
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo update
+```
+
+### Ensure Datadog Keys Are Exported
+
+```bash
+export DD_API_KEY=
+export DD_APP_KEY=
+```
+
+### Deploy Datadog Helm Chart 
+
+```bash
+helm install datadogagent \
+ --set datadog.apiKey=$DD_API_KEY \
+ --set datadog.appKey=$DD_APP_KEY \
+ -f helm/values.yaml datadog/datadog
+```
+
+Then visit https://app.datadoghq.com/screen/integration/86/kubernetes-overview
+to check on the cluster stats. 
+
+## Deploy Storedog
+
+```bash
+kubectl apply -f storedog/```
