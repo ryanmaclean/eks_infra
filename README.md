@@ -6,7 +6,7 @@ Terraform code based on https://github.com/terraform-providers/terraform-provide
 
 Ensure you have you're AWS env vars setup.
 
-Run `terraform init`
+Run `cd terraform && terraform init`
 
 Then run `terraform apply`:
 
