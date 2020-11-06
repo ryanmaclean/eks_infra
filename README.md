@@ -4,7 +4,7 @@ Terraform code based on https://github.com/terraform-providers/terraform-provide
 
 ## Getting Started
 
-Ensure you have you're AWS env vars setup.
+Ensure you have your AWS env vars setup.
 
 Run `cd terraform && terraform init`
 
