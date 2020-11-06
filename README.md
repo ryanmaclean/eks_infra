@@ -68,4 +68,5 @@ to check on the cluster stats.
 ## Deploy Storedog
 
 ```bash
-kubectl apply -f storedog/```
+kubectl apply -f storedog/
+```
