@@ -1,10 +1,10 @@
 # EKS Infrastructure for Demo
 
-`eksctl` script (one-liner) taken from the docs: https://eksctl.io/usage/creating-and-managing-clusters/
+* [`eksctl` script (one-liner) taken from the docs](https://eksctl.io/usage/creating-and-managing-clusters/)
 
-Terraform code based on https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/eks-getting-started
+* [Terraform code based on the Terraform Provider example](https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/eks-getting-started)
 
-Cloudformation code based on https://github.com/aws-quickstart/quickstart-amazon-eks/blob/main/templates/amazon-eks.template.yaml
+* [Cloudformation code based on AWS Quick Start](https://github.com/aws-quickstart/quickstart-amazon-eks/blob/main/templates/amazon-eks.template.yaml)
 
 ## Getting Started
 
