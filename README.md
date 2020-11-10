@@ -1,6 +1,6 @@
 # EKS Infrastructure for Demo
 
-EKSCtl script (one-liner) taken from the docs: https://eksctl.io/usage/creating-and-managing-clusters/
+`eksctl` script (one-liner) taken from the docs: https://eksctl.io/usage/creating-and-managing-clusters/
 
 Terraform code based on https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/eks-getting-started
 
