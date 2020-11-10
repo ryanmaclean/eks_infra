@@ -13,21 +13,18 @@ Run `cd terraform && terraform init`
 Then run `terraform apply`:
 
 ```bash
-terraform apply \
- -var='cluster-name=terraform-eks-demo'
+terraform apply -var='cluster-name=terraform-eks-demo'
 ```
 
 Retrieve the kubeconfig with:
 
 ```bash
-aws eks \
- --region us-east-1 update-kubeconfig \
- --name terraform-eks-demo
+aws eks --region us-east-1 update-kubeconfig --name terraform-eks-demo
 ```
 
 Check out the cluster:
 ```bash
-kubectl get po -A
+kubectl get pods -A
 ```
 
 You should see something similar to:
