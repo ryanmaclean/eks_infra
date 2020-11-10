@@ -26,7 +26,7 @@ Run the eksctl script:
 
 Visit the Cloudformation site and upload the `cloudformation/amazon-eks-template.yaml` file in order to walk through the form. https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template
 
-You can also click this [deploy to AWS](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=First-EKS&templateURL=https://s3-external-1.amazonaws.com/cf-templates-k7u92ie5gn4v-us-east-1/2020315G2I-amazon-eks.template.yaml) button to simply load a snapshot of the template and get started!
+You can also click this [deploy to AWS](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=First-EKS&templateURL=https://s3-external-1.amazonaws.com/cf-templates-k7u92ie5gn4v-us-east-1/2020315G2I-amazon-eks.template.yaml) link to simply load a snapshot of the template and get started!
 
 > Note: if you use ekctl to create a cluster and want to create more, grab the two files in the cloudfomation bucket here: https://s3.console.aws.amazon.com/s3/home?region=us-east-1# (look for  bucket that starts with `cf-templates`)
 
