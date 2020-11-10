@@ -66,14 +66,6 @@ kube-system   kube-proxy-tlmbv           1/1     Running   0          3m4s
 
 ## Datadog Install
 
-### Add Helm Repository
-
-```bash
-helm repo add datadog https://helm.datadoghq.com
-helm repo add stable https://kubernetes-charts.storage.googleapis.com/
-helm repo update
-```
-
 ### Ensure Datadog Keys Are Exported
 
 ```bash
@@ -81,7 +73,24 @@ export DD_API_KEY=
 export DD_APP_KEY=
 ```
 
-### Deploy Datadog Helm Chart 
+### Operator Installation
+As the operator handles all installs, the instructions are as follows:
+
+```bash
+bash ./operator/operator_deploy.sh
+```
+
+### Helm Instructions
+If you're more accustomed to a Helm workflow, this repo also has you covered.
+#### Add Helm Repository
+
+```bash
+helm repo add datadog https://helm.datadoghq.com
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo update
+```
+
+#### Deploy Datadog Helm Chart 
 
 ```bash
 helm install datadogagent \
