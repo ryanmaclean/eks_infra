@@ -8,6 +8,28 @@ Cloudformation code based on https://github.com/aws-quickstart/quickstart-amazon
 
 ## Getting Started
 
+There are three ways presented in this repo that will help you to get a cluster up and running:
+
+* eksctl - great for getting started quickly, will also generate Cloudformation templates
+* Cloudformation - a good way to present a menu to end users
+* Terraform - good for when you're managing more than just AWS resources
+
+### eksctl
+
+Run the eksctl script: 
+
+```bash
+./eksctl/script.sh
+```
+
+### Cloudformation
+
+Visit the Cloudformation site and upload the `cloudformation/amazon-eks-template.yaml` file in order to walk through the form. https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template
+
+> Note: if you use ekctl to create a cluster and want to create more, grab the two files in the cloudfomation bucket here: https://s3.console.aws.amazon.com/s3/home?region=us-east-1# (look for  bucket that starts with `cf-templates`)
+
+### Terraform
+
 Ensure you have your AWS env vars setup.
 
 Run `cd terraform && terraform init`
@@ -37,6 +59,7 @@ kube-system   coredns-75b44cb5b4-7bqnj   1/1     Running   0          6m45s
 kube-system   coredns-75b44cb5b4-8j78j   1/1     Running   0          6m45s
 kube-system   kube-proxy-tlmbv           1/1     Running   0          3m4s
 ```
+
 ## Datadog Install
 
 ### Add Helm Repository
