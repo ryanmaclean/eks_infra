@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 CLUSTER_TOKEN="$((base64 /dev/urandom | tr -d '/+' | head -c 32) 2>/dev/null)"
-FW_VER="0.15.1"
+FW_VER="v0.17.0"
 
 # INSTALL OLM
 curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/"$FW_VER"/install.sh | bash -s "$FW_VER"
