@@ -12,7 +12,7 @@ kubectl get csv -n operators
 kubectl create secret generic datadog-auth-token --from-literal=token="$CLUSTER_TOKEN"
 
 # Update Cluster Agent Manifest with API Key
-sed "s/<YOUR_API_KEY>/$DD_API/g;" cluster-agent.yaml > updated-cluster-agent.yaml
+sed "s/<YOUR_API_KEY>/$DD_API_KEY/g;" cluster-agent.yaml > updated-cluster-agent.yaml
 
 # Apply both DD manifests
 kubectl apply -f datadog-cluster-agent_service.yaml
