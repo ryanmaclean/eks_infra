@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+# ASSUMES THE DATADOG API KEY IS STORED IN DD_API_KEY ENV VAR
+
 CLUSTER_TOKEN="$((base64 /dev/urandom | tr -d '/+' | head -c 32) 2>/dev/null)"
 FW_VER="v0.17.0"
 
