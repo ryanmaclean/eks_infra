@@ -263,7 +263,7 @@ datadog:
   #
   env:
     - name: "DD_KUBELET_TLS_VERIFY"
-      value: "false"
+      value: "true"
   #   - name: <ENV_VAR_NAME>
   #     value: <ENV_VAR_VALUE>
 
