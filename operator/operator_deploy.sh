@@ -1,21 +1,27 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
-# ASSUMES THE DATADOG API KEY IS STORED IN DD_API_KEY ENV VAR
+set -euo pipefail
 
-CLUSTER_TOKEN="$((base64 /dev/urandom | tr -d '/+' | head -c 32) 2>/dev/null)"
+if [[ -z "${DD_API_KEY:-}" ]]; then
+  echo "DD_API_KEY must be set in the environment"
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLUSTER_TOKEN="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
 FW_VER="v0.17.0"
 
-# INSTALL OLM
-curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/"$FW_VER"/install.sh | bash -s "$FW_VER"
+curl -sL "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${FW_VER}/install.sh" | bash -s "${FW_VER}"
 kubectl create -f https://operatorhub.io/install/datadog-operator.yaml
 kubectl get csv -n operators
 
-# ADD DD CLUSTER TOKEN TO CLUSTER
-kubectl create secret generic datadog-auth-token --from-literal=token="$CLUSTER_TOKEN"
+kubectl create secret generic datadog-auth-token \
+  --from-literal=token="${CLUSTER_TOKEN}" \
+  --dry-run=client -o yaml | kubectl apply -f -
 
-# Update Cluster Agent Manifest with API Key
-sed "s/<YOUR_API_KEY>/$DD_API_KEY/g;" cluster-agent.yaml > updated-cluster-agent.yaml
+kubectl create secret generic datadog-api-key \
+  --from-literal=api-key="${DD_API_KEY}" \
+  --dry-run=client -o yaml | kubectl apply -f -
 
-# Apply both DD manifests
-kubectl apply -f datadog-cluster-agent_service.yaml
-kubectl apply -f updated-cluster-agent.yaml
+kubectl apply -f "${SCRIPT_DIR}/datadog-cluster-agent_service.yaml"
+kubectl apply -f "${SCRIPT_DIR}/cluster-agent.yaml"

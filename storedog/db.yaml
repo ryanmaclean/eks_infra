@@ -11,24 +11,24 @@ metadata:
     app: ecommerce
     service: db
 type: Opaque
-data:
+stringData:
   pw: password
 ---
-  apiVersion: v1
-  kind: PersistentVolume
-  metadata:
-    name: task-pv-volume 
-    labels:
-      type: local
-  spec:
-    storageClassName: manual 
-    capacity:
-      storage: 5Gi
-    accessModes:
-      - ReadWriteOnce 
-    persistentVolumeReclaimPolicy: Retain
-    hostPath:
-      path: "/mnt/data" 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: task-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/mnt/data"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -66,9 +66,19 @@ spec:
       - image: postgres:11-alpine
         name: postgres
         securityContext:
-          privileged: true 
+          allowPrivilegeEscalation: false
         ports:
           - containerPort: 5432
+        readinessProbe:
+          tcpSocket:
+            port: 5432
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 5432
+          initialDelaySeconds: 15
+          periodSeconds: 20
         env:
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -79,10 +89,16 @@ spec:
           value: "user"
         - name: PGDATA
           value: "/var/lib/postgresql/data/mydata"
-        resources: {}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
         volumeMounts:
         - mountPath: /var/lib/postgresql/data
-          name: postgresdb 
+          name: postgresdb
       serviceAccountName: postgres
       volumes:
       - name: postgresdb
@@ -92,10 +108,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  creationTimestamp: null
   labels:
     app: ecommerce
-    service: db 
+    service: db
   name: db
 spec:
   ports:
@@ -105,5 +120,3 @@ spec:
   selector:
     app: ecommerce
     service: db
-status:
-  loadBalancer: {}

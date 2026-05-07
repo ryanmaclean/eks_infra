@@ -49,16 +49,28 @@ spec:
         # - name: DD_APPLICATION_ID
         #   value: <your_application_id>
         image: ddtraining/ecommerce-frontend:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: ecommerce-spree-observability
         ports:
         - containerPort: 3000
           protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 20
         resources:
           requests:
             cpu: 100m
             memory: 100Mi
-          limits: {}
+          limits:
+            cpu: 500m
+            memory: 512Mi
 ---
 apiVersion: v1
 kind: Service

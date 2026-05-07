@@ -41,19 +41,22 @@ users:
 - name: aws
   user:
     exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws-iam-authenticator
+      apiVersion: client.authentication.k8s.io/v1beta1
+      command: aws
       args:
-        - "token"
-        - "-i"
+        - "eks"
+        - "get-token"
+        - "--cluster-name"
         - "${var.cluster-name}"
 KUBECONFIG
 }
 
 output "config_map_aws_auth" {
-  value = local.config_map_aws_auth
+  value     = local.config_map_aws_auth
+  sensitive = true
 }
 
 output "kubeconfig" {
-  value = local.kubeconfig
+  value     = local.kubeconfig
+  sensitive = true
 }
