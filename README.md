@@ -2,7 +2,7 @@
 
 Lightweight examples for provisioning an Amazon EKS cluster and deploying Datadog.
 
-This repository includes three cluster provisioning paths:
+* [OpenTofu/Terraform-compatible IaC code based on the AWS provider example](https://github.com/hashicorp/terraform-provider-aws/tree/main/examples/eks-getting-started)
 
 - `eksctl` (quick start): [eksctl/script.sh](eksctl/script.sh)
 - CloudFormation template: [cloudformation/amazon-eks-template.yaml](cloudformation/amazon-eks-template.yaml)
@@ -16,7 +16,9 @@ This repository includes three cluster provisioning paths:
 - `helm` (for Datadog Helm install)
 - Datadog API key (required), Datadog APP key (optional; needed for specific cluster-agent features)
 
-Verify AWS identity before provisioning:
+* eksctl - great for getting started quickly, will also generate Cloudformation templates
+* Cloudformation - a good way to present a menu to end users
+* OpenTofu (Terraform-compatible) - good for when you're managing more than just AWS resources
 
 ```bash
 aws sts get-caller-identity
@@ -42,10 +44,21 @@ https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/crea
 
 The template defaults to `ProvisionBastionHost=Disabled` and a modern Lambda runtime for generated cluster names.
 
-Minimum required CloudFormation inputs include `KeyPairName`, `RemoteAccessCIDR`, `VPCID`, and `PrivateSubnet1ID`.
+### OpenTofu (Terraform-compatible)
 
 Ingress controller behavior for this template:
 
+Run `cd terraform && tofu init`
+
+Then run `tofu apply`:
+
+```bash
+tofu apply -var='cluster-name=terraform-eks-demo'
+```
+
+If you still use Terraform, you can replace `tofu` with `terraform` in the commands above.
+
+Retrieve the kubeconfig with:
 - `ProvisionALBIngressController` is a legacy toggle and is `Disabled` by default.
 - Enabling it creates the `ALBIngressStack` nested stack from `templates/amazon-eks-alb-ingress.template.yaml`.
 - This path is separate from the modern AWS Load Balancer Controller.
