@@ -2,7 +2,7 @@
 
 * [`eksctl` script (one-liner) taken from the docs](https://eksctl.io/usage/creating-and-managing-clusters/)
 
-* [Terraform code based on the Terraform Provider example](https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/eks-getting-started)
+* [OpenTofu/Terraform-compatible IaC code based on the AWS provider example](https://github.com/hashicorp/terraform-provider-aws/tree/main/examples/eks-getting-started)
 
 * [Cloudformation code based on AWS Quick Start](https://github.com/aws-quickstart/quickstart-amazon-eks/blob/main/templates/amazon-eks.template.yaml)
 
@@ -12,7 +12,7 @@ There are three ways presented in this repo that will help you to get a cluster 
 
 * eksctl - great for getting started quickly, will also generate Cloudformation templates
 * Cloudformation - a good way to present a menu to end users
-* Terraform - good for when you're managing more than just AWS resources
+* OpenTofu (Terraform-compatible) - good for when you're managing more than just AWS resources
 
 ### eksctl
 
@@ -32,17 +32,19 @@ You can also click the Launh Stack button below to load a snapshot of the templa
 
 > Note: if you use ekctl to create a cluster and want to create more, grab the two files in the cloudfomation bucket here: https://s3.console.aws.amazon.com/s3/home?region=us-east-1# (look for  bucket that starts with `cf-templates`)
 
-### Terraform
+### OpenTofu (Terraform-compatible)
 
 Ensure you have your AWS env vars setup.
 
-Run `cd terraform && terraform init`
+Run `cd terraform && tofu init`
 
-Then run `terraform apply`:
+Then run `tofu apply`:
 
 ```bash
-terraform apply -var='cluster-name=terraform-eks-demo'
+tofu apply -var='cluster-name=terraform-eks-demo'
 ```
+
+If you still use Terraform, you can replace `tofu` with `terraform` in the commands above.
 
 Retrieve the kubeconfig with:
 
