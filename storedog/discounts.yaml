@@ -14,13 +14,13 @@ spec:
   strategy: {}
   template:
     metadata:
-      creationTimestamp: null
       labels:
         service: discounts
         app: ecommerce
     spec:
       containers:
       - image: ddtraining/discounts-service:latest
+        imagePullPolicy: IfNotPresent
         name: discounts
         command: ["ddtrace-run"]
         args: ["flask", "run", "--port=5001", "--host=0.0.0.0"]
@@ -28,7 +28,7 @@ spec:
           - name: FLASK_APP
             value: "discounts.py"
           - name: FLASK_DEBUG
-            value: "1"
+            value: "0"
           - name: POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -48,7 +48,23 @@ spec:
             value: "true"
         ports:
         - containerPort: 5001
-        resources: {}
+        readinessProbe:
+          tcpSocket:
+            port: 5001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 5001
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
 ---
 apiVersion: v1
 kind: Service

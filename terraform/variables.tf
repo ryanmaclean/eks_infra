@@ -10,3 +10,9 @@ variable "cluster-name" {
   default = "terraform-eks-demo"
   type    = string
 }
+
+variable "workstation_external_cidr" {
+  description = "Optional CIDR block allowed to access the EKS API endpoint."
+  type        = string
+  default     = null
+}

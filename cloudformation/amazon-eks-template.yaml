@@ -70,6 +70,10 @@ Parameters:
     Type: String
     AllowedValues: [ "Enabled", "Disabled" ]
     Default: "Disabled"
+    Description: >-
+      Legacy option. When enabled, this template deploys the nested stack
+      templates/amazon-eks-alb-ingress.template.yaml (ALB Ingress Controller
+      path). It does not install the AWS Load Balancer Controller.
   ProvisionMonitoringStack:
     Type: String
     AllowedValues: [ "Prometheus + Grafana", "None" ]
@@ -77,7 +81,7 @@ Parameters:
   ProvisionBastionHost:
     Type: String
     AllowedValues: [ "Enabled", "Disabled" ]
-    Default: "Enabled"
+    Default: "Disabled"
   BastionAMIID:
     Type: String
     Default: ""
@@ -281,10 +285,8 @@ Resources:
           BastionVariables: ~~/<ConfigSetName>/bastion/BastionVariables~~
   NodeGroupStack:
     Type: "AWS::CloudFormation::Stack"
-    Metadata:
-      DependsOn:
-        - !If [EnableWindows, !Ref WindowsSupportNodeGroupStack, !Ref 'AWS::NoValue']
-        - !Ref EKSControlPlane
+    DependsOn:
+      - EKSControlPlane
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks-nodegroup/templates/amazon-eks-nodegroup.template.yaml'
@@ -402,10 +404,8 @@ Resources:
         HttpProxy: !Ref HttpProxy
   ClusterAutoScalerStack:
     Condition: EnableClusterAutoScaler
-    Metadata:
-      DependsOn:
-       - !Ref ControlPlaneSecurityGroupIngress
-       - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
+    DependsOn:
+      - ControlPlaneSecurityGroupIngress
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
@@ -419,10 +419,8 @@ Resources:
   EfsStack:
     Condition: EnableEfs
     Type: 'AWS::CloudFormation::Stack'
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
+    DependsOn:
+      - ControlPlaneSecurityGroupIngress
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/amazon-eks-efs.template.yaml'
@@ -505,11 +503,9 @@ Resources:
         IamOidcProvider: !If [EnableOIDC, 'Enabled', 'Disabled']
         EKSClusterName: !If [GenerateClusterName, !Ref GenerateName, !Ref EKSClusterName]
   PrometheusStack:
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !Ref NodeGroupStack
-        - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
+    DependsOn:
+      - ControlPlaneSecurityGroupIngress
+      - NodeGroupStack
     Condition: EnableMonitoringPrometheusGrafana
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -520,11 +516,9 @@ Resources:
       Parameters:
         ClusterName: !GetAtt EKSControlPlane.Outputs.EKSName
   GrafanaStack:
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !Ref NodeGroupStack
-        - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
+    DependsOn:
+      - ControlPlaneSecurityGroupIngress
+      - NodeGroupStack
     Condition: EnableMonitoringPrometheusGrafana
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -555,11 +549,9 @@ Resources:
             - !Join [",", [ !Ref PrivateSubnet1ID, !Ref PrivateSubnet2ID ]]
             - !Ref PrivateSubnet1ID
   ALBIngressStack:
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !Ref NodeGroupStack
-        - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
+    DependsOn:
+      - ControlPlaneSecurityGroupIngress
+      - NodeGroupStack
     Condition: EnableALBIngressController
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -575,7 +567,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Handler: index.handler
-      Runtime: python3.7
+      Runtime: python3.11
       Role: !Sub ["arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${Prefix}-CopyZips", {Prefix: !FindInMap [Config, Prefix, Value]}]
       Timeout: 900
       Code:
@@ -607,11 +599,9 @@ Resources:
   TestSuiteStack:
     Condition: DeployTestStack
     Type: AWS::CloudFormation::Stack
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !Ref NodeGroupStack
-        - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
+    DependsOn:
+      - ControlPlaneSecurityGroupIngress
+      - NodeGroupStack
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/amazon-eks-test.template.yaml'
@@ -624,14 +614,12 @@ Resources:
         - 's3://${S3Bucket}/${QSS3KeyPrefix}scripts/test-manifest.yaml'
         - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
   SnykStack:
-    DependsOn: FunctionStack
+    DependsOn:
+      - FunctionStack
+      - ControlPlaneSecurityGroupIngress
+      - NodeGroupStack
     Condition: EnableSnyk
     Type: AWS::CloudFormation::Stack
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !Ref NodeGroupStack
-        - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-eks-snyk/templates/eks-snyk.template.yaml'
@@ -642,14 +630,12 @@ Resources:
         SnykIntegrationId: !Ref SnykIntegrationId
         Namespace: snyk-monitor
   VaultStack:
-    DependsOn: FunctionStack
+    DependsOn:
+      - FunctionStack
+      - ControlPlaneSecurityGroupIngress
+      - NodeGroupStack
     Condition: EnableVault
     Type: AWS::CloudFormation::Stack
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !Ref NodeGroupStack
-        - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-eks-hashicorp-vault/templates/quickstart-eks-hashicorp-vault.template.yml'
@@ -675,14 +661,12 @@ Resources:
         VaultDeploymentSize: ~~/<ConfigSetName>/hashicorp/vault/DeploymentSize~~
         Nodes: ~~/<ConfigSetName>/hashicorp/vault/Nodes~~
   ConsulStack:
-    DependsOn: FunctionStack
+    DependsOn:
+      - FunctionStack
+      - ControlPlaneSecurityGroupIngress
+      - NodeGroupStack
     Condition: EnableConsul
     Type: AWS::CloudFormation::Stack
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !Ref NodeGroupStack
-        - !If [EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue']
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-eks-hashicorp-consul/templates/quickstart-eks-hashicorp-consul.template.yml'
@@ -708,14 +692,12 @@ Resources:
         ConsulDeploymentSize: ~~/<ConfigSetName>/hashicorp/consul/DeploymentSize~~
         ConsulReplicas: ~~/<ConfigSetName>/hashicorp/consul/Nodes~~
   CalicoStack:
-    DependsOn: FunctionStack
+    DependsOn:
+      - FunctionStack
+      - ControlPlaneSecurityGroupIngress
+      - NodeGroupStack
     Condition: EnableCalico
     Type: AWS::CloudFormation::Stack
-    Metadata:
-      DependsOn:
-        - !Ref ControlPlaneSecurityGroupIngress
-        - !Ref NodeGroupStack
-        - !If [ EnableFargate, !Ref FargateNamespaces, !Ref 'AWS::NoValue' ]
     Properties:
       TemplateURL: !Sub
         - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-eks-tigera-calico/templates/eks-calico-entrypoint.template.yaml'

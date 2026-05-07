@@ -1,40 +1,52 @@
-# EKS Infrastructure for Demo
+# EKS Infrastructure Demo
 
-* [`eksctl` script (one-liner) taken from the docs](https://eksctl.io/usage/creating-and-managing-clusters/)
+Lightweight examples for provisioning an Amazon EKS cluster and deploying Datadog.
 
 * [OpenTofu/Terraform-compatible IaC code based on the AWS provider example](https://github.com/hashicorp/terraform-provider-aws/tree/main/examples/eks-getting-started)
 
-* [Cloudformation code based on AWS Quick Start](https://github.com/aws-quickstart/quickstart-amazon-eks/blob/main/templates/amazon-eks.template.yaml)
+- `eksctl` (quick start): [eksctl/script.sh](eksctl/script.sh)
+- CloudFormation template: [cloudformation/amazon-eks-template.yaml](cloudformation/amazon-eks-template.yaml)
+- Terraform configuration: [terraform/](terraform/)
 
-## Getting Started
+## Prerequisites
 
-There are three ways presented in this repo that will help you to get a cluster up and running:
+- AWS CLI v2 configured (`aws configure` or equivalent SSO profile)
+- `kubectl`
+- One of: `eksctl`, `terraform`, or AWS CloudFormation console access
+- `helm` (for Datadog Helm install)
+- Datadog API key (required), Datadog APP key (optional; needed for specific cluster-agent features)
 
 * eksctl - great for getting started quickly, will also generate Cloudformation templates
 * Cloudformation - a good way to present a menu to end users
 * OpenTofu (Terraform-compatible) - good for when you're managing more than just AWS resources
 
-### eksctl
+```bash
+aws sts get-caller-identity
+```
 
-Run the eksctl script: 
+## 1) Provision an EKS Cluster
+
+Choose one method below.
+
+### Option A: eksctl (fastest path)
 
 ```bash
 ./eksctl/script.sh
 ```
 
-### Cloudformation
+The script uses explicit defaults for cluster name, region, Kubernetes version, and managed nodegroup sizing, and can be overridden with environment variables.
 
-Visit the Cloudformation site and upload the `cloudformation/amazon-eks-template.yaml` file in order to walk through the form. https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template
+### Option B: CloudFormation
 
-You can also click the Launh Stack button below to load a snapshot of the template and get started!
+Open the CloudFormation create-stack flow and upload [cloudformation/amazon-eks-template.yaml](cloudformation/amazon-eks-template.yaml):
 
-[![alt](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template)
+https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template
 
-> Note: if you use ekctl to create a cluster and want to create more, grab the two files in the cloudfomation bucket here: https://s3.console.aws.amazon.com/s3/home?region=us-east-1# (look for  bucket that starts with `cf-templates`)
+The template defaults to `ProvisionBastionHost=Disabled` and a modern Lambda runtime for generated cluster names.
 
 ### OpenTofu (Terraform-compatible)
 
-Ensure you have your AWS env vars setup.
+Ingress controller behavior for this template:
 
 Run `cd terraform && tofu init`
 
@@ -47,65 +59,98 @@ tofu apply -var='cluster-name=terraform-eks-demo'
 If you still use Terraform, you can replace `tofu` with `terraform` in the commands above.
 
 Retrieve the kubeconfig with:
+- `ProvisionALBIngressController` is a legacy toggle and is `Disabled` by default.
+- Enabling it creates the `ALBIngressStack` nested stack from `templates/amazon-eks-alb-ingress.template.yaml`.
+- This path is separate from the modern AWS Load Balancer Controller.
+
+Minimal-risk migration path in this repository:
+
+1. **Safe now (no/low-code)**: keep `ProvisionALBIngressController=Disabled`, document that setting clearly in deployment runbooks, and install AWS Load Balancer Controller as a separate post-cluster step.
+2. **Deferred larger migration**: replace `ProvisionALBIngressController`/`ALBIngressStack` wiring in the CloudFormation template with a dedicated AWS Load Balancer Controller install path (IRSA, IAM policy updates, and rollout validation).
+
+### Option C: Terraform
 
 ```bash
-aws eks --region us-east-1 update-kubeconfig --name terraform-eks-demo
+cd terraform
+terraform init
+terraform apply -var='cluster-name=terraform-eks-demo'
 ```
 
-Check out the cluster:
+## 2) Configure kubectl Access
+
+After cluster creation, update kubeconfig:
+
 ```bash
+export AWS_REGION="<your-region>"
+export EKS_CLUSTER_NAME="<your-cluster-name>"
+aws eks --region "$AWS_REGION" update-kubeconfig --name "$EKS_CLUSTER_NAME"
+```
+
+If you used CloudFormation and left `EKSClusterName` blank, fetch the generated cluster name from stack outputs:
+
+```bash
+aws cloudformation describe-stacks \
+  --stack-name "<your-stack-name>" \
+  --region "$AWS_REGION" \
+  --query "Stacks[0].Outputs[?OutputKey=='EKSClusterName'].OutputValue" \
+  --output text
+```
+
+Validate access:
+
+```bash
+kubectl get nodes
 kubectl get pods -A
 ```
 
-You should see something similar to:
-```
-NAMESPACE     NAME                       READY   STATUS    RESTARTS   AGE
-kube-system   aws-node-v9hkw             1/1     Running   0          3m4s
-kube-system   coredns-75b44cb5b4-7bqnj   1/1     Running   0          6m45s
-kube-system   coredns-75b44cb5b4-8j78j   1/1     Running   0          6m45s
-kube-system   kube-proxy-tlmbv           1/1     Running   0          3m4s
-```
+## 3) Install Datadog on EKS
 
-## Datadog Install
-
-### Ensure Datadog Keys Are Exported
+Set keys in your current shell (avoid committing keys to files):
 
 ```bash
-export DD_API_KEY=
-export DD_APP_KEY=
+export DD_API_KEY="<your-api-key>"
+export DD_APP_KEY="<your-app-key>" # optional
 ```
 
-### Operator Installation
-As the operator handles all installs, the instructions are as follows:
+### Recommended: Helm install
+
+```bash
+helm repo add datadog https://helm.datadoghq.com
+helm repo update
+helm upgrade --install datadogagent datadog/datadog \
+  -f helm/values.yaml \
+  --set datadog.apiKey="$DD_API_KEY" \
+  --set datadog.appKey="$DD_APP_KEY"
+```
+
+Notes:
+
+- The legacy `stable` Helm repository is deprecated and not required.
+- `helm upgrade --install` is idempotent and safer for repeat runs.
+
+### Operator install (legacy path in this repo)
 
 ```bash
 bash ./operator/operator_deploy.sh
 ```
 
-### Helm Instructions
-If you're more accustomed to a Helm workflow, this repo also has you covered.
-#### Add Helm Repository
+Use this only if you specifically want the operator flow in this repository.
 
-```bash
-helm repo add datadog https://helm.datadoghq.com
-helm repo add stable https://kubernetes-charts.storage.googleapis.com/
-helm repo update
-```
-
-#### Deploy Datadog Helm Chart 
-
-```bash
-helm install datadogagent \
- --set datadog.apiKey=$DD_API_KEY \
- --set datadog.appKey=$DD_APP_KEY \
- -f helm/values.yaml datadog/datadog
-```
-
-Then visit https://app.datadoghq.com/screen/integration/86/kubernetes-overview
-to check on the cluster stats. 
-
-## Deploy Storedog
+## 4) Deploy Demo App
 
 ```bash
 kubectl apply -f storedog/
+```
+
+## 5) Validate in Datadog
+
+- Kubernetes Overview: https://app.datadoghq.com/screen/integration/86/kubernetes-overview
+
+## Cleanup
+
+If you created resources with Terraform:
+
+```bash
+cd terraform
+terraform destroy -var='cluster-name=terraform-eks-demo'
 ```
